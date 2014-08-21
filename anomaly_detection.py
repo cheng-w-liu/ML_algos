@@ -1,40 +1,39 @@
 import numpy as np
 
 class AnomalyDetection :
+
+    def multivariateGaussian(self, X, mu, Sigma) :
+        m, n = X.shape
+        p = np.zeros(m, 'float')
+        D = X - np.tile(mu, (m,1))
+        invSigma = np.linalg.pinv(Sigma)
+        f = ( np.power(2.0*np.pi, float(n)/2.0) ) * np.power( np.linalg.det(Sigma), 0.5 )        
+        for i in range(m) :
+            p[i] = (1.0/f) * np.exp( -0.5 * (D[i,:].dot(invSigma)).dot(D[i,:]) )
+        # end of i
+        return p
+    # end of multivairateGaussian
+
+
+    def computeMultivariateGaussian(self, xi, mu, Sigma) :
+        n = len(xi)
+        d = xi - mu
+        invSigma = np.linalg.pinv(Sigma)
+        f = ( np.power(2.0*np.pi, float(n)/2.0) ) * np.power( np.linalg.det(Sigma), 0.5 )        
+        p = (1.0/f) * np.exp( -0.5 * (d.dot(invSigma)).dot(d) )
+        return p
+    # end of multivairateGaussian
+
     
     def estimateGaussian(self, X) :
-        n = X.shape[1]
-        mu = np.zeros(n, 'float')
-        var = np.zeros(n, 'float')
-        for c in range(n) :
-            mu[c] = np.mean(X[:,c])
-            var[c] = np.var(X[:,c]) #, ddof=1)
-        return mu, var
+        m = X.shape[0]
+        mu = np.mean(X, 0)
+        D = X - np.tile(mu, (m,1))
+        Sigma = (1.0/float(m)) * D.T.dot(D)
+        
+        return mu, Sigma
     # end of estimateGaussian
 
-    
-    def multivariateGaussian(self, X, mu, var) :
-        m, n = X.shape
-        assert n == len(mu) and n == len(var)
-        p = np.zeros(m, 'float')
-        for r in range(m) :
-            xi = X[r,:]
-            p[r] = self.ProbProduct(xi, mu, var)
-        return p
-    # end of multivariateGaussian
-
-
-    def ProbProduct(self, xi, mu, var) :
-        probability = 1.0
-        for j in range(len(xi)) : 
-            probability *= self.singleProb(xi[j], mu[j], var[j])
-        return probability
-    # end of multivariateProb
-
-
-    def singleProb(self, xj, muj, varj) :
-        return (1.0/np.sqrt(2.0*np.pi*varj))*np.exp(-np.power(xj-muj,2.0)/(2.0*varj))
-    # end of singleProb
 
 
     def selectThreshold(self, yval, pval) :
