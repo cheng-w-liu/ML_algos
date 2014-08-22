@@ -22,27 +22,10 @@ class CollaborativeFiltering :
         Theta = np.reshape(params[num_movies*num_features:], (num_users, num_features) )
 
         grad_X = np.zeros_like(X)
-        for i in range(num_movies) :
-            select = np.where( R[i,:] == 1 )
-            idx = select[0]
-            # for a given movie i, only consider those users who rated i
-            Theta_select = Theta[idx, :] 
-            Y_select = Y[i,idx]
-            grad_X[i,:] = (X[i,:].dot(Theta_select.T) - Y_select).dot(Theta_select)
-            grad_X[i,:] = grad_X[i,:] + lambda_reg * X[i,:]
-        # end of i
-
-
         grad_Theta = np.zeros_like(Theta)
-        for j in range(num_users) :
-            select = np.where( R[:,j] == 1)
-            idx = select[0]
-            # for a given user j, only consider those movies rated by j
-            X_select = X[idx, :]
-            Y_select = Y[idx, j]
-            grad_Theta[j,:] = (X_select.dot(Theta[j,:].T) - Y_select).T.dot(X_select)
-            grad_Theta[j,:] = grad_Theta[j,:] + lambda_reg * Theta[j,:]
-        # end of j
+
+        grad_X = ((X.dot(Theta.T) - Y) * R).dot(Theta) + lambda_reg * X
+        grad_Theta = ((X.dot(Theta.T) - Y) * R).T.dot(X) + lambda_reg * Theta
 
         grad = np.hstack( (grad_X.ravel(), grad_Theta.ravel()) )
         return grad

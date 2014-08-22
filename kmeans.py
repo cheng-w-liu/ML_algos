@@ -95,5 +95,4 @@ class kMeans :
         return centroids
     # end of computeCentroids
 
-
 # end of class kMeans

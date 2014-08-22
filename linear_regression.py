@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.optimize as sci_opt
 
-
 class Linear_Regression :
 
     """

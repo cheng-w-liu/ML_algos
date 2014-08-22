@@ -2,7 +2,6 @@ import numpy as np
 
 class Newral_Network :
 
-
     def nnComputeCost(self, nn_params, S1, S2, S3, 
                       X, y, lambda_reg) :
         assert len(nn_params) == (S2*(S1+1) + S3*(S2+1))
@@ -125,6 +124,5 @@ class Newral_Network :
         p = np.argmax(A3, 1)
         return p
     # end of predict
-
 
 # end of class Neural_Network
