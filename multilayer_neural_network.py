@@ -227,21 +227,24 @@ class NeuralNetwork(object):
             
         Returns:
             cost function = cross entropy + L2
-        """
-        
-        L = len(parameters) // 2
+        """        
+
         cross_entropy = self.computeCrossEntropy(AL, Y)
+
         
         L2_penalty = 0.0
+        """
+        TO BE IMPLEMENTED
+        L = len(parameters) // 2
         for l in range(1, L+1):
             W = parameters['W'+str(l)]
             L2_penalty += np.linalg.norm(W)
         L2_penalty *= lambd/(2.0 * m)  
         L2_penalty = np.squeeze(L2_penalty)
-        
+        """
         cost = cross_entropy + L2_penalty
-        
-        return cross_entropy
+                
+        return cost
     
     
     def computeCrossEntropy(self, AL, Y):
