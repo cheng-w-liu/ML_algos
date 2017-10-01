@@ -216,7 +216,7 @@ class NeuralNetwork(object):
         return parameters
     
     
-    def computeCost(self, AL, Y, parameters, lambd):
+    def computeCost(self, AL, Y, parameters=None, lambd=0):
         """
         Arguments:
             AL -- 1 x m, probability vector, output from the layer-L
@@ -308,16 +308,18 @@ class NeuralNetwork(object):
         for i in range(num_iterations):
             AL, caches = self.forwardPropagation(X, parameters)
             if i % 50 == 0:
-                costs.append(self.computeCrossEntropy(AL, Y))
+                costs.append(self.computeCost(AL, Y))
             grads = self.backwardPropagation(AL, Y, caches)
             parameters = self.updateParameters(parameters, grads, learning_rate)
         
         self.parameters = parameters
         return costs
+
     
     def predict_proba(self, X):
         AL, _ = self.forwardPropagation(X, self.parameters)
         return AL
+
     
     def predict(self, X):
         AL = self.predict_proba(X)
@@ -325,3 +327,106 @@ class NeuralNetwork(object):
         return Y_hat
     
 
+    def gradientChecking(self, parameters, gradients, X, Y, epsilon=1e-7):
+        """
+        Arguments:
+            parameters -- a dictionary containing W1, b1, W2, b2, ..., WL, bL
+            gradients -- a dictionary containing dW1, db1, dW2, db2, ..., dWL, dbL, from backwardPropagation
+            X -- input data, of shape (input_size, m)
+            Y -- label, of shape (1, m)
+        Returns:
+            difference  -- difference between the back prop gradient and the approximated gradient
+        """
+        
+        Theta = self.unrollParameters(parameters)
+        dTheta = self.unrollGradients(gradients, self.layers_dims)
+        assert Theta.shape == dTheta.shape
+        num_parameters = Theta.shape[0]
+        J_plus = np.zeros(num_parameters)
+        J_minus = np.zeros(num_parameters)
+        grad_approx = np.zeros((num_parameters, 1))
+        for i in range(num_parameters):
+
+            Theta_plus = np.copy(Theta)
+            Theta_plus[i, 0] += epsilon
+            AL, _ = self.forwardPropagation(X, self.rollThetaValues(Theta_plus, self.layers_dims))
+            J_plus[i] = self.computeCost(AL, Y)
+
+            Theta_minus = np.copy(Theta)
+            Theta_minus[i, 0] -= epsilon
+            AL, _ = self.forwardPropagation(X, self.rollThetaValues(Theta_minus, self.layers_dims))
+            J_minus[i] = self.computeCost(AL, Y)
+
+            grad_approx[i, 0] = (J_plus[i] - J_minus[i]) / (2.0 * epsilon)
+
+        # compare dTheta and grad_approx
+        numerator = np.linalg.norm(dTheta - grad_approx)
+        denominator = np.linalg.norm(dTheta) + np.linalg.norm(grad_approx)
+        diff = numerator / denominator
+        return diff
+
+
+    def unrollParameters(self, parameters):
+        """        
+        Arguments:
+            parameters -- W1, b1, W2, b2, ...WL, bL
+            
+        Return:
+            a long column-vector that is a result of unrolling the parameters
+        """
+        L = len(parameters) // 2
+
+        counter = 0
+        for l in range(1, L+1):
+            W = parameters["W"+str(l)]
+            b = parameters["b"+str(l)]
+            new_vector = np.concatenate((np.reshape(W, (-1, 1)),
+                                         np.reshape(b, (-1, 1))), axis=0)
+            if counter == 0:
+                Theta = new_vector
+            else:
+                Theta = np.concatenate((Theta, new_vector), axis=0)
+            counter += 1
+        return Theta
+        
+        
+    def unrollGradients(self, gradients, layers_dims):
+        """        
+        Arguments:
+            gradients -- a dictionary containing dW1, db1, dW2, db2, ...dWL, dbL
+                         and also (not used in this function) dAL, ..., dA2, dA1, dA0
+            
+        Return:
+            a long column-vector that is a result of unrolling the parameters
+        """
+        L = len(layers_dims) - 1
+
+        counter = 0
+        for l in range(1, L+1):
+            dW = gradients["dW"+str(l)]
+            db = gradients["db"+str(l)]
+            new_vector = np.concatenate((np.reshape(dW, (-1, 1)),
+                                         np.reshape(db, (-1, 1))), axis=0)
+            if counter == 0:
+                dTheta = new_vector
+            else:
+                dTheta = np.concatenate((dTheta, new_vector), axis=0)
+            counter += 1
+        return dTheta
+
+
+    def rollThetaValues(self, Theta, layers_dims):
+        parameters = {}
+        L = len(layers_dims) - 1
+        n_seen = 0
+        for l in range(1, L+1):
+            n_l = layers_dims[l]
+            n_l_1 = layers_dims[l-1]
+            parameters["W"+str(l)] = Theta[n_seen: n_seen + n_l * n_l_1, :].reshape((n_l, n_l_1))
+            n_seen += n_l * n_l_1
+            parameters["b"+str(l)] = Theta[n_seen: n_seen + n_l].reshape((n_l, 1))
+            n_seen += n_l
+        return parameters
+
+        
+        
