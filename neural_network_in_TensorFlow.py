@@ -45,8 +45,8 @@ class NeuralNetworkTF(object):
             Y -- tf.placeholder object for the labels, of shape (n_y, None) and dtype "float"        
         """
         
-        X = tf.placeholder(dtype=tf.float64, shape=(n_x, None))
-        Y = tf.placeholder(dtype=tf.float64, shape=(n_y, None))
+        X = tf.placeholder(dtype=tf.float64, shape=(n_x, None), name='X')
+        Y = tf.placeholder(dtype=tf.float64, shape=(n_y, None), name='Y')
         return X, Y
         
     
@@ -171,6 +171,7 @@ class NeuralNetworkTF(object):
         init = tf.global_variables_initializer()
         
         costs = []
+
         with tf.Session() as sess:
             
             sess.run(init)
@@ -191,6 +192,8 @@ class NeuralNetworkTF(object):
                 costs.append(epoch_cost)
                 
             self.parameters = sess.run(parameters)
+            
+            writer = tf.summary.FileWriter("./graphs", sess.graph)            
             
         return costs
             
