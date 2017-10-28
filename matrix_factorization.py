@@ -121,7 +121,7 @@ class MatrixFactorization(object):
         Y_hat = self.predict(parameters)
         E = np.multiply(Y - Y_hat, R)
         J0 = (1.0/(2.0*L)) * np.sum(np.power(E, 2))
-        reg = (beta/(2.0*L)) * ( np.linalg.norm(P) + np.linalg.norm(Q) + np.linalg.norm(u) + np.linalg.norm(d) )
+        reg = (beta/(2.0*L)) * ( np.linalg.norm(P)**2 + np.linalg.norm(Q)**2 + np.linalg.norm(u)**2 + np.linalg.norm(d)**2 )
         J = J0 + reg
         return J
 
