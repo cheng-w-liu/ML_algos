@@ -185,8 +185,3 @@ class MatrixFactorization(object):
         Y_hat = b + u + d + np.dot(P, Q.T)    
         return Y_hat
         
-              
-
-
-
-
