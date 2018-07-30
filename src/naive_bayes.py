@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.misc import logsumexp
+#from scipy.misc import logsumexp
 from abc import ABC, abstractmethod
 
 class BaseNaiveBayes(ABC):
@@ -11,7 +11,8 @@ class BaseNaiveBayes(ABC):
 
     def predict_log_proba(self, X):
         ll = self._log_likelihood(X)
-        Z = logsumexp(ll, axis=1, keepdims=True)
+        Z = logsumexp(ll, axis=1)
+        #Z = logsumexp(ll, axis=1, keepdims=True)
         return ll - Z
 
     def predict_proba(self, X):
@@ -78,3 +79,9 @@ class MultinomialNaiveBayes(BaseDiscreteNaiveBayes):
     def _log_likelihood(self, X):
         ll = np.dot(X, self.feature_log_prob.T) + self.class_log_prob
         return ll
+
+
+def logsumexp(X, axis):
+    max_val = np.max(X, axis=axis, keepdims=True)
+    res = np.log(np.sum(np.exp(X - max_val), axis=axis, keepdims=True)) + max_val
+    return res
