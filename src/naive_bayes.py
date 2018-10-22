@@ -24,6 +24,59 @@ class BaseNaiveBayes(ABC):
     def _log_likelihood(self, X):
         pass
 
+class GaussianNaiveBayes(BaseNaiveBayes):
+
+    def __init__(self, class_prior=None):
+        self.class_prior = class_prior
+
+    def fit(self, X, y, weights=None):
+        self.classes = np.sort(np.unique(y))
+        self.n_classes = len(self.classes)
+        self.n_features = X.shape[1]
+        self.class_counts = np.zeros(self.n_classes)
+        self.Mu_ = np.zeros((self.n_classes, self.n_features))
+        self.Sigma_ = np.zeros((self.n_classes, self.n_features))
+
+        for c in range(self.n_classes):
+            Xc = X[y == c, :]
+            if weights is not None:
+                Wc = weights[y == c]
+                Nc = Wc.sum()
+            else:
+                Wc = None
+                Nc = Xc.shape[0]
+            self.class_counts[c] = Nc
+            mu_c, Sigma_c = self._update_mean_variance(Xc, Wc)
+            self.Mu_[c, :] = mu_c
+            self.Sigma_[c, :] = Sigma_c
+
+        if self.class_prior is not None:
+            self.class_probs = self.class_prior / self.class_prior.sum()
+        else:
+            self.class_probs = self.class_counts / self.class_counts.sum()
+
+    def _log_likelihood(self, X):
+        N = X.shape[0]
+        log_likelihood = np.zeros((N, self.n_classes))
+        for c in range(self.n_classes):
+            n_ij = self._log_normal_probs(X, self.Mu_[c, :], self.Sigma_[c, :])
+            log_likelihood[:, c] = np.sum(n_ij, axis=1) + np.log(self.class_probs[c])
+        return log_likelihood
+
+    def _update_mean_variance(self, X, weights):
+        if weights is not None:
+            norm = weights.sum()
+            mu = np.average(X, axis=0, weights=weights / norm)
+            Sigma = np.average((X - mu)**2, axis=0, weights=weights / norm)
+        else:
+            mu = np.mean(X, axis=0)
+            Sigma = np.var(X, axis=0)
+        return mu, Sigma
+
+    def _log_normal_probs(self, X, mu, Sigma):
+        n_ij = -0.5 * np.log(2.0 * np.pi * Sigma) - 0.5 * (X - mu)**2 / Sigma
+        return n_ij
+
 
 class BaseDiscreteNaiveBayes(BaseNaiveBayes):
 
